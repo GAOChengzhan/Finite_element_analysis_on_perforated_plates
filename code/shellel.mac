@@ -1,0 +1,97 @@
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!第05讲：四边简支板的屈曲荷载
+!!!!算例Ex05a
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+finish
+/clear
+/filname,shellel
+
+/prep7 
+!!!!参数输入
+t=0.016      !!板厚度板厚设为16mm
+b=0.12       !!板宽度b=120mm
+a=0.4        !!板长度L1=300mm
+Ex=2.06e11  !!弹性模量
+Nu=0.3      !!泊松比
+r=0.03   !!圆半径
+alpha=0.25
+pres=1250000   !!荷载N/m拉力为 150kN
+
+!!!!定义单元类型，实常数，材料特性 
+et,1,shell181
+r,1,t
+mp,ex,1,Ex
+mp,prxy,1,Nu
+
+!!!建立几何模型
+CSWPLA,11,1,alpha,1,
+K,1,-r/alpha,,,
+K,2,r/alpha,,,
+L,1, 2
+CSYS,0
+LSYMM,Y,1, , , ,0,0
+LPLOT
+nummrg,all
+k,5,-a/2,-b/2,0
+k,6,a/2,-b/2,0
+k,7,a/2,b/2,0
+k,8,-a/2,b/2,0
+l,5,6
+l,6,7
+l,7,8
+l,8,5
+al,1,2,3,4,5,6
+
+!!!单元划分
+aatt,1,1,1,0
+aesize,all,0.01*r  !!!设置单元划分尺寸
+amesh,all
+
+!!!给两加载边施加约束
+DL,4, ,uz,0 
+DL,6, ,uz,0 
+
+!!!给两非加载边施加约束
+DL,3, ,uz,0 
+DL,5, ,uz,0 
+dtran
+
+!!施加x,y方向约束，消除刚体位移
+nsel,s,loc,x,0,0
+nsel,r,loc,y,b/2,b/2
+d,all,ux,0
+nsel,s,loc,x,0,0
+nsel,r,loc,y,-b/2,-b/2
+d,all,ux,0
+nsel,s,loc,x,a/2,a/2
+nsel,r,loc,y,0,0
+d,all,uy,0
+nsel,s,loc,x,-a/2,-a/2
+nsel,r,loc,y,0,0
+d,all,uy,0
+nsel,all
+
+
+!!!施加荷载
+SFL,4,PRES,-pres 
+SFL,6,PRES,-pres 
+sftran
+
+!!!首先进行静力解
+/solu 
+antype,0
+pstres,on 
+solve 
+finish 
+
+!!!然后进行屈曲分析
+!/solu 
+!antype,1      
+!bucopt,lanb,4
+!mxpand,4,,,1 
+!solve 
+
+!!!后处理
+/post1
+!set,last
+plnsol,s,X,0,1.0
